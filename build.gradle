@@ -28,9 +28,6 @@ dependencies {
 
    
     implementation group: 'com.moandjiezana.toml', name: 'toml4j', version: '0.7.2'
-    //implementation group: 'org.tomlj', name: 'tomlj', version: '1.1.1'
-    //implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
-    implementation group: 'com.github.mwiede', name: 'jsch', version: '0.2.19'
     implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.13.2'
 }
 

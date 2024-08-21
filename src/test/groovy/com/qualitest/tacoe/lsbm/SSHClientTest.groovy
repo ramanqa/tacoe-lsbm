@@ -2,20 +2,7 @@ package com.qualitest.tacoe.lsbm
 
 import spock.lang.Specification
 
-import org.apache.sshd.client.SshClient;
-import org.apache.sshd.client.session.ClientSession;
-import org.apache.sshd.client.channel.ClientChannel;
-import org.apache.sshd.client.channel.ClientChannelEvent;
-import org.apache.sshd.common.channel.Channel;
-import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
-import org.apache.sshd.common.config.keys.FilePasswordProvider;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
-
-import java.util.EnumSet;
-
+import java.time.Duration;
 
 class SSHClientTest extends Specification {
 
@@ -24,9 +11,10 @@ class SSHClientTest extends Specification {
 host = "192.168.1.235"
 port = 22
 username = "ramandeep"
-auth_type = "ssh-key"
-ssh_key = "./id_rsa"
+authType = "ssh-key"
+sshKey = "./id_rsa"
 password = "\$KaaYoT3"
+sshKeyPassphrase = ""
             """
 
     def "exec() execute command and returns shell response"() {
@@ -36,7 +24,12 @@ password = "\$KaaYoT3"
             file.createNewFile()
             file.write toml_content
 
+            def sshClient = new SSHClient(Configuration.fromTOML(
+            "./lsbm.config.toml")); 
+
         when:
+            def cmdResponse = sshClient.exec("bluetoothctl show", Duration.ofSeconds(10));
+        /**
             String response = "";
             String command = "bluetoothctl show";
             Long timeoutInSeconds = 5;
@@ -77,8 +70,10 @@ password = "\$KaaYoT3"
             } finally {
                 client.stop();
             }
+        */ 
            
         then:
-            println response
+            println cmdResponse.getResponse();
+            println cmdResponse.getError();
     }
 }
