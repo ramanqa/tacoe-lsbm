@@ -1,0 +1,73 @@
+plugins {
+    id 'groovy'
+    id 'java-library'
+    
+    id 'checkstyle'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+    // Use the latest Groovy version for Spock testing
+    testImplementation libs.groovy
+
+    // Use the awesome Spock testing and specification framework even with Java
+    testImplementation libs.spock.core
+    testImplementation libs.junit
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // This dependency is exported to consumers, that is to say found on their compile classpath.
+    api libs.commons.math3
+
+    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+    implementation libs.guava
+
+   
+    implementation group: 'com.moandjiezana.toml', name: 'toml4j', version: '0.7.2'
+    //implementation group: 'org.tomlj', name: 'tomlj', version: '1.1.1'
+    //implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
+    implementation group: 'com.github.mwiede', name: 'jsch', version: '0.2.19'
+    implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.13.2'
+}
+
+// Apply a specific Java toolchain to ease working on different environments.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                   'Implementation-Version': project.version)
+    }
+}
+
+checkstyle {
+    toolVersion = '10.17.0'
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
+
+checkstyleMain {
+    source = 'src/main/java'
+}
+
+checkstyleTest {
+    source = 'src/test/java'
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        html.destination rootProject.file("build/reports/checkstyle.html")
+    }
+}

@@ -1,0 +1,8 @@
+[bluetooth-host-config]
+
+host = "192.168.1.235" # SSH Host where bluetooth has to be managed
+username = "ramandeep" # SSH username
+auth_type = "ssh-key" # password/ssh-key/nopass
+ssh-key = "ramandeep.ssh_identity" # path to ssh identity file if auth_type is 'ssh-key'
+
+
