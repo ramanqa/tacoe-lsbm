@@ -6,14 +6,25 @@ import java.time.Duration;
 
 class SSHClientTest extends Specification {
 
+    def setup() {
+        def output = '''total 20
+        drwxr-xr-x 3 1100 1100 4096 Aug  7 16:52 .
+        drwxr-xr-x 8 1100 1100 4096 Aug  1 17:53 ..
+        drwxr-xr-x 3 1100 1100 4096 Aug  7 16:49 examples\n\n
+            '''
+    }
+
+    def cleanup() {
+    }
+
     def toml_content = """
 [lsbm]
-host = "192.168.1.235"
-port = 22
+host = "localhost"
+port = 2223
 username = "ramandeep"
-authType = "ssh-key"
+authType = "password"
 sshKey = "./id_rsa"
-password = "\$KaaYoT3"
+password = "PASSWORD"
 sshKeyPassphrase = ""
             """
 
@@ -25,55 +36,13 @@ sshKeyPassphrase = ""
             file.write toml_content
 
             def sshClient = new SSHClient(Configuration.fromTOML(
-            "./lsbm.config.toml")); 
+            "./lsbm.config.toml")) 
 
         when:
-            def cmdResponse = sshClient.exec("bluetoothctl show", Duration.ofSeconds(10));
-        /**
-            String response = "";
-            String command = "bluetoothctl show";
-            Long timeoutInSeconds = 5;
-
-            SshClient client = SshClient.setUpDefaultClient();
-            client.start();
-            
-            try (ClientSession session = client.connect("ramandeep", "192.168.1.235", 22)
-              .verify(timeoutInSeconds, TimeUnit.SECONDS).getSession()) {
-                //session.addPasswordIdentity("\\\$KaaYoT3");
-                String[] files = new String[1];
-                files[0] = "./id_ed25519";
-                FileKeyPairProvider provider = new FileKeyPairProvider(java.nio.file.Paths.get("id_rsa"));
-                provider.setPasswordFinder(FilePasswordProvider.of(""));
-                session.setKeyIdentityProvider(provider);
-                session.auth().verify(timeoutInSeconds, TimeUnit.SECONDS);
-                
-                try (ByteArrayOutputStream responseStream = new ByteArrayOutputStream(); 
-                    ByteArrayOutputStream errorStream = new ByteArrayOutputStream(); 
-                    ClientChannel channel = session.createChannel(Channel.CHANNEL_EXEC, command)) {
-                    channel.setOut(responseStream);
-                    channel.setErr(errorStream);
-                    try {
-                        channel.open().verify(timeoutInSeconds, TimeUnit.SECONDS);
-                        try (OutputStream pipedIn = channel.getInvertedIn()) {
-                            pipedIn.write(command.getBytes());
-                            pipedIn.flush();
-                        }
-                    
-                        channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 
-                        TimeUnit.SECONDS.toMillis(timeoutInSeconds));
-                        System.out.println(new String(responseStream.toByteArray()));
-                        System.out.println(new String(errorStream.toByteArray()));
-                    } finally {
-                        channel.close(false);
-                    }
-                }
-            } finally {
-                client.stop();
-            }
-        */ 
+            def cmdResponse = sshClient.exec("ls -l", Duration.ofSeconds(10))
            
         then:
-            println cmdResponse.getResponse();
-            println cmdResponse.getError();
+            println cmdResponse.getResponse()
+            println cmdResponse.getError()
     }
 }

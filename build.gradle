@@ -1,8 +1,8 @@
 plugins {
     id 'groovy'
     id 'java-library'
-    
     id 'checkstyle'
+    id 'jacoco'
 }
 
 repositories {
@@ -19,14 +19,14 @@ dependencies {
     testImplementation libs.junit
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.12.0'
 
     // This dependency is exported to consumers, that is to say found on their compile classpath.
     api libs.commons.math3
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation libs.guava
-
-   
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.16.0'    
     implementation group: 'com.moandjiezana.toml', name: 'toml4j', version: '0.7.2'
     implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.13.2'
 }
@@ -67,4 +67,11 @@ tasks.withType(Checkstyle) {
     reports {
         html.destination rootProject.file("build/reports/checkstyle.html")
     }
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
 }

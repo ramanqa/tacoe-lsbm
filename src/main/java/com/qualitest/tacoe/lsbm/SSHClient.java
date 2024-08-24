@@ -11,8 +11,6 @@ import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.EnumSet;
 import java.time.Duration;
@@ -26,11 +24,20 @@ public class SSHClient {
 
     /**
      * Constructor.
-     * 
+     *
      * @param   configuration   TOML configuration for SSH Connection.
      */
     public SSHClient(final Configuration configuration) {
         this.config = configuration.to(LSBMConfiguration.class);
+    }
+
+    /**
+     * alternate contructor.
+     *
+     * @param   lsbmConfiguration   LSBMConfiguration object.
+     */
+    public SSHClient(final LSBMConfiguration lsbmConfiguration) {
+        this.config = lsbmConfiguration;
     }
 
     /**
@@ -41,7 +48,7 @@ public class SSHClient {
     public LSBMConfiguration getConfig() {
         return this.config;
     }
-    
+
     /**
      * execue shell command on ssh and get response.
      *
@@ -50,31 +57,30 @@ public class SSHClient {
      * @return  CommandResponse   SSH command response
      */
     public CommandResponse exec(final String command, final Duration timeout)
-            throws IOException {
+            throws SSHKeyFileMissingException, IOException {
         CommandResponse cmdResponse;
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
         try (ClientSession session = client.connect(
-              this.getConfig().lsbm.username,
-              this.getConfig().lsbm.host,
-              this.getConfig().lsbm.port)
+              this.getConfig().lsbm().username(),
+              this.getConfig().lsbm().host(),
+              this.getConfig().lsbm().port())
           .verify(timeout.getSeconds(), TimeUnit.SECONDS).getSession()) {
-            if (this.getConfig().lsbm.password != null) {
-                session.addPasswordIdentity(this.getConfig().lsbm.password);
+            if (this.getConfig().lsbm().password() != null) {
+                session.addPasswordIdentity(this.getConfig().lsbm().password());
             }
-            if (this.getConfig().lsbm.authType.equals("ssh-key")) {
+            if (this.getConfig().lsbm().authType().equals("ssh-key")) {
                 FileKeyPairProvider provider = new FileKeyPairProvider(
-                    Paths.get(this.getConfig().lsbm.sshKey));
+                    this.getConfig().lsbm().sshKey());
                 provider.setPasswordFinder(FilePasswordProvider.of(
-                    this.getConfig().lsbm.sshKeyPassphrase));
+                    this.getConfig().lsbm().sshKeyPassphrase()));
                 session.setKeyIdentityProvider(provider);
             }
             session.auth().verify(timeout.getSeconds(), TimeUnit.SECONDS);
-            
             try (ByteArrayOutputStream responseStream =
-              new ByteArrayOutputStream(); 
-                ByteArrayOutputStream errorStream = new ByteArrayOutputStream(); 
+              new ByteArrayOutputStream();
+                ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
                 ClientChannel channel = session.createChannel(
                     Channel.CHANNEL_EXEC, command)) {
                 channel.setOut(responseStream);
@@ -86,8 +92,7 @@ public class SSHClient {
                         pipedIn.write(command.getBytes());
                         pipedIn.flush();
                     }
-                
-                    channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), 
+                    channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED),
                     TimeUnit.SECONDS.toMillis(timeout.getSeconds()));
                     cmdResponse = new CommandResponse(responseStream,
                         errorStream);
@@ -101,4 +106,14 @@ public class SSHClient {
         return cmdResponse;
     }
 
+    /**
+     * execue shell command on ssh and get response.
+     *
+     * @param   command   command to execute
+     * @return  CommandResponse   SSH command response
+     */
+    public CommandResponse exec(final String command)
+          throws SSHKeyFileMissingException, IOException {
+        return this.exec(command, this.getConfig().lsbm().commandWaitTimeout());
+    }
 }

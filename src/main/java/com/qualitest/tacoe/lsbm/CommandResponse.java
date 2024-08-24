@@ -6,12 +6,12 @@ public class CommandResponse {
 
     /**
      * variable to hold response.
-     */ 
+     */
     private String response;
-    
+
     /**
      * variable to hold error.
-     */ 
+     */
     private String error;
 
     /**

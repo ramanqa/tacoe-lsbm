@@ -1,7 +1,6 @@
 package com.qualitest.tacoe.lsbm;
 
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,10 +17,10 @@ public class Configuration {
     /**
      * default contructor.
      *
-     * @param  toml   TOML Object for configuration file
+     * @param  tomlObj   TOML Object for configuration file
      */
-    public Configuration(final Toml toml) {
-        this.toml = toml;
+    public Configuration(final Toml tomlObj) {
+        this.toml = tomlObj;
     }
 
     /**
@@ -45,7 +44,7 @@ public class Configuration {
     /**
      * Configuration class constructor.
      *
-     * @param  stringPathToConfigToml    String path to TOML file
+     * @param  pathToConfigToml    Path Object to TOML file
      * @return Configuration object
      */
     public static final Configuration fromTOML(
@@ -57,7 +56,14 @@ public class Configuration {
         return new Configuration(new Toml().read(pathToConfigToml.toFile()));
     }
 
-    public <T> T to(Class<T> targetClass) {
+    /**
+     * instantiate TOML object to LSBM Configuration class.
+     *
+     * @param   targetClass   Class File for instantiation.
+     * @param   <T>   class mapper
+     * @return  <T>   instantiated class
+     */
+    public <T> T to(final Class<T> targetClass) {
         return this.toml.to(targetClass);
     }
 }
