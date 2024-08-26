@@ -29,6 +29,7 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.16.0'    
     implementation group: 'com.moandjiezana.toml', name: 'toml4j', version: '0.7.2'
     implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.13.2'
+    implementation group: 'org.apache.sshd', name: 'sshd-scp', version: '2.13.2'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

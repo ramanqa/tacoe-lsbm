@@ -8,12 +8,16 @@ import org.apache.sshd.common.channel.Channel;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 
+import org.apache.sshd.scp.client.ScpClientCreator;
+import org.apache.sshd.scp.client.ScpClient;
+
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.EnumSet;
 import java.time.Duration;
+import java.nio.file.Paths;
 
 public class SSHClient {
 
@@ -115,5 +119,47 @@ public class SSHClient {
     public CommandResponse exec(final String command)
           throws SSHKeyFileMissingException, IOException {
         return this.exec(command, this.getConfig().lsbm().commandWaitTimeout());
+    }
+
+    /**
+     * downlaod file from remote machine.
+     *
+     * @param   sourceFilePath    file path of file to download.
+     * @param   destinationPath   folder location where to download the file.
+     * @param   timeout   max wait timeout to wait for download to complete.
+     */ 
+    public void download(String sourceFilePath, String destinationPath,
+          Duration timeout) throws SSHKeyFileMissingException, IOException {
+        CommandResponse cmdResponse;
+        SshClient client = SshClient.setUpDefaultClient();
+        client.start();
+
+        try (ClientSession session = client.connect(
+              this.getConfig().lsbm().username(),
+              this.getConfig().lsbm().host(),
+              this.getConfig().lsbm().port())
+          .verify(timeout.getSeconds(), TimeUnit.SECONDS).getSession()) {
+            if (this.getConfig().lsbm().password() != null) {
+                session.addPasswordIdentity(this.getConfig().lsbm().password());
+            }
+            if (this.getConfig().lsbm().authType().equals("ssh-key")) {
+                FileKeyPairProvider provider = new FileKeyPairProvider(
+                    this.getConfig().lsbm().sshKey());
+                provider.setPasswordFinder(FilePasswordProvider.of(
+                    this.getConfig().lsbm().sshKeyPassphrase()));
+                session.setKeyIdentityProvider(provider);
+            }
+            session.auth().verify(timeout.getSeconds(), TimeUnit.SECONDS);
+            ScpClientCreator creator = ScpClientCreator.instance();
+            ScpClient scpClient = creator.createScpClient(session);
+            scpClient.download(
+                sourceFilePath,
+                destinationPath,
+                ScpClient.Option.Recursive,
+                ScpClient.Option.PreserveAttributes,
+                ScpClient.Option.TargetIsDirectory  );
+        } finally {
+            client.stop();
+        }
     }
 }

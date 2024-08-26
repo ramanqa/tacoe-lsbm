@@ -217,4 +217,89 @@ Device 40:4E:36:49:35:5E Pixel2""")
             assert devices.get(0).name() == "OnePlus6";
             assert devices.get(1).name() == "Pixel2";
     }
+
+    def "scanForDevices(Duration timeout) makes devices available in scan list"() {
+         setup:
+            SSHClient mockedSSHClient = mock(SSHClient.class)
+            CommandResponse mockedCommandResponse = mock(CommandResponse.class)
+            when(mockedCommandResponse.getResponse()).thenReturn("")
+            when(mockedSSHClient.exec("bluetoothctl scan on",
+              Duration.ofSeconds(10)))
+                .thenReturn(mockedCommandResponse)
+            CommandResponse mockedDevicesCommandResponse = mock(CommandResponse.class)
+            when(mockedDevicesCommandResponse.getResponse()).thenReturn(
+                """Device 64:A2:F9:90:69:A7 OnePlus6
+Device 40:4E:36:49:35:5E Pixel2""")
+            when(mockedSSHClient.exec("bluetoothctl devices"))
+                .thenReturn(mockedDevicesCommandResponse)
+
+        when:
+            def bluetoothManager = new BluetoothManager(Configuration.fromTOML(
+                "./lsbm.config.toml"))
+            bluetoothManager.setSshClient(mockedSSHClient);
+        
+        then:
+            bluetoothManager.scan(Switch.ON)
+            Thread.sleep(10000);
+            def response = bluetoothManager.devices()
+            assert response.get(0).name() == "OnePlus6"
+            assert response.get(1).name() == "Pixel2"
+    }
+
+    def "resetController() clears deviecs list"() {
+         setup:
+            SSHClient mockedSSHClient = mock(SSHClient.class)
+            CommandResponse mockedCommandResponse = mock(CommandResponse.class)
+            when(mockedCommandResponse.getResponse()).thenReturn("")
+            when(mockedSSHClient.exec("bluetoothctl power off"))
+                .thenReturn(mockedCommandResponse)
+            when(mockedSSHClient.exec("bluetoothctl power on"))
+                .thenReturn(mockedCommandResponse)
+            CommandResponse mockedDevicesCommandResponse = mock(CommandResponse.class)
+            when(mockedDevicesCommandResponse.getResponse()).thenReturn("");
+            when(mockedSSHClient.exec("bluetoothctl devices"))
+                .thenReturn(mockedDevicesCommandResponse)
+
+        when:
+            def bluetoothManager = new BluetoothManager(Configuration.fromTOML(
+                "./lsbm.config.toml"))
+            bluetoothManager.setSshClient(mockedSSHClient);
+
+            bluetoothManager.resetController();
+        
+        then:
+            def response = bluetoothManager.devices()
+            assert response.size() == 0
+    }
+
+    def "pair device"() {
+        setup:
+            SSHClient mockedSSHClient = mock(SSHClient.class)
+
+        when:
+            def bluetoothManager = new BluetoothManager(Configuration.fromTOML(
+                "./lsbm.config.toml"))
+
+            bluetoothManager.resetController()
+            bluetoothManager.pairable(Switch.ON)
+            bluetoothManager.discoverable(Switch.ON)
+            bluetoothManager.agent(Switch.ON)
+            bluetoothManager.scan(Switch.ON)
+            Thread.sleep(20000)
+            def response = bluetoothManager.devices()
+            def onePlus = bluetoothManager.getDeviceByName("OnePlus6")
+            bluetoothManager.trustDevice(onePlus);
+            bluetoothManager.pairDevice(onePlus, Duration.ofSeconds(30));
+            bluetoothManager.connectDevice(onePlus);
+            Thread.sleep(5);
+            def path = bluetoothManager.recordAudio(Duration.ofSeconds(20));
+            println path.toString();
+
+        then:
+            println "done"
+            //println(response);
+            //println(bluetoothManager.getDeviceByName("OnePlus6").mac());
+            bluetoothManager.removeDevice(onePlus);
+          
+    }
 }

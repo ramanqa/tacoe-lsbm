@@ -10,11 +10,11 @@ public class Device {
     /**
      * variable to hold Deviec MAC address.
      */
-    private String macAddress;
+    private String mac;
 
-    public Device (String dname, String mac) {
+    public Device (String dname, String macAdd) {
         this.name = dname;
-        this.macAddress = mac;
+        this.mac = macAdd;
     }
 
     /**
@@ -31,7 +31,11 @@ public class Device {
      *
      * @return  String  device MAC address.
      */
-    public String macAddress() {
-        return this.macAddress;
+    public String mac() {
+        return this.mac;
+    }
+
+    public String toString() {
+        return "[Device|" + this.mac() + "|" + this.name() + "]";
     }
 }

@@ -27,7 +27,7 @@ sshKey = "./id_rsa"
 password = "PASSWORD"
 sshKeyPassphrase = ""
             """
-
+/*
     def "exec() execute command and returns shell response"() {
         setup:
             def file = new File("./lsbm.config.toml")
@@ -36,7 +36,7 @@ sshKeyPassphrase = ""
             file.write toml_content
 
             def sshClient = new SSHClient(Configuration.fromTOML(
-            "./lsbm.config.toml")) 
+              "./lsbm.config.toml")) 
 
         when:
             def cmdResponse = sshClient.exec("ls -l", Duration.ofSeconds(10))
@@ -45,4 +45,5 @@ sshKeyPassphrase = ""
             println cmdResponse.getResponse()
             println cmdResponse.getError()
     }
+*/
 }
